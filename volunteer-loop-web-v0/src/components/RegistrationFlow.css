@@ -49,6 +49,23 @@
   }
 }
 
+/* Step Content Transitions */
+.step-content {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.fade-in {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+.transitioning {
+  pointer-events: none;
+}
+
 .modal-header {
   text-align: center;
   padding: 32px 32px 24px;

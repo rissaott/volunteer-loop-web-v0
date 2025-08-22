@@ -19,6 +19,7 @@ const RegistrationFlow = ({ onComplete }: RegistrationFlowProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     console.log('RegistrationFlow mounted, user:', user);
@@ -53,8 +54,14 @@ const RegistrationFlow = ({ onComplete }: RegistrationFlowProps) => {
 
   const handleUserTypeSelect = (type: 'volunteer' | 'organization') => {
     console.log('User selected type:', type);
-    setUserType(type);
-    setStep(2);
+    setIsTransitioning(true);
+    
+    // Quick smooth transition between steps
+    setTimeout(() => {
+      setUserType(type);
+      setStep(2);
+      setIsTransitioning(false);
+    }, 150);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -86,7 +93,7 @@ const RegistrationFlow = ({ onComplete }: RegistrationFlowProps) => {
     try {
       // First, let's test if we can connect to the database
       console.log('Testing database connection...');
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from('users')
         .select('count')
         .limit(1);
@@ -247,14 +254,20 @@ const RegistrationFlow = ({ onComplete }: RegistrationFlowProps) => {
 
   const goBack = () => {
     if (step === 2) {
-      setStep(1);
-      setUserType(null);
-      setFormData({
-        name: '',
-        organizationName: '',
-        organizationDescription: '',
-        organizationWebsite: ''
-      });
+      setIsTransitioning(true);
+      
+      // Quick smooth transition back to step 1
+      setTimeout(() => {
+        setStep(1);
+        setUserType(null);
+        setFormData({
+          name: '',
+          organizationName: '',
+          organizationDescription: '',
+          organizationWebsite: ''
+        });
+        setIsTransitioning(false);
+      }, 150);
     }
   };
 
@@ -266,109 +279,111 @@ const RegistrationFlow = ({ onComplete }: RegistrationFlowProps) => {
           <p>Let's get you set up on VolunteerLoop</p>
         </div>
 
-        {step === 1 ? (
-          <div className="user-type-selection">
-            <h3>Choose Your Account Type</h3>
-            <div className="type-cards">
-              <div 
-                className="type-card volunteer-card"
-                onClick={() => handleUserTypeSelect('volunteer')}
-              >
-                <div className="type-icon">👤</div>
-                <h4>Volunteer</h4>
-                <p>I want to find and participate in volunteer opportunities</p>
+        <div className={`step-content ${isTransitioning ? 'fade-out' : 'fade-in'}`}>
+          {step === 1 ? (
+            <div className="user-type-selection">
+              <h3>Choose Your Account Type</h3>
+              <div className="type-cards">
+                <div 
+                  className="type-card volunteer-card"
+                  onClick={() => handleUserTypeSelect('volunteer')}
+                >
+                  <div className="type-icon">👤</div>
+                  <h4>Volunteer</h4>
+                  <p>I want to find and participate in volunteer opportunities</p>
+                </div>
+                
+                <div 
+                  className="type-card organization-card"
+                  onClick={() => handleUserTypeSelect('organization')}
+                >
+                  <div className="type-icon">🏢</div>
+                  <h4>Organization</h4>
+                  <p>I represent an organization that needs volunteers</p>
+                </div>
               </div>
               
-              <div 
-                className="type-card organization-card"
-                onClick={() => handleUserTypeSelect('organization')}
-              >
-                <div className="type-icon">🏢</div>
-                <h4>Organization</h4>
-                <p>I represent an organization that needs volunteers</p>
-              </div>
-            </div>
-            
-            <button onClick={handleExit} className="btn btn-secondary exit-btn">
-              Exit Registration
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="registration-form">
-            <div className="form-header">
-              <button type="button" onClick={goBack} className="back-btn">
-                ← Back
-              </button>
-              <h3>Complete Your Profile</h3>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="name">Full Name *</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            {userType === 'organization' && (
-              <>
-                <div className="form-group">
-                  <label htmlFor="organizationName">Organization Name *</label>
-                  <input
-                    type="text"
-                    id="organizationName"
-                    name="organizationName"
-                    value={formData.organizationName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter organization name"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="organizationDescription">Organization Description *</label>
-                  <textarea
-                    id="organizationDescription"
-                    name="organizationDescription"
-                    value={formData.organizationDescription}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Describe what your organization does"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="organizationWebsite">Website (Optional)</label>
-                  <input
-                    type="url"
-                    id="organizationWebsite"
-                    name="organizationWebsite"
-                    value={formData.organizationWebsite}
-                    onChange={handleInputChange}
-                    placeholder="https://your-organization.com"
-                  />
-                </div>
-              </>
-            )}
-
-            {error && <div className="error-message">{error}</div>}
-
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Complete Registration'}
-              </button>
-              <button type="button" onClick={handleExit} className="btn btn-secondary">
+              <button onClick={handleExit} className="btn btn-secondary exit-btn">
                 Exit Registration
               </button>
             </div>
-          </form>
-        )}
+          ) : (
+            <form onSubmit={handleSubmit} className="registration-form">
+              <div className="form-header">
+                <button type="button" onClick={goBack} className="back-btn">
+                  ← Back
+                </button>
+                <h3>Complete Your Profile</h3>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="name">Full Name *</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter your full name"
+                />
+              </div>
+
+              {userType === 'organization' && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="organizationName">Organization Name *</label>
+                    <input
+                      type="text"
+                      id="organizationName"
+                      name="organizationName"
+                      value={formData.organizationName}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Enter organization name"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="organizationDescription">Organization Description *</label>
+                    <textarea
+                      id="organizationDescription"
+                      name="organizationDescription"
+                      value={formData.organizationDescription}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Describe what your organization does"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="organizationWebsite">Website (Optional)</label>
+                    <input
+                      type="url"
+                      id="organizationWebsite"
+                      name="organizationWebsite"
+                      value={formData.organizationWebsite}
+                      onChange={handleInputChange}
+                      placeholder="https://your-organization.com"
+                    />
+                  </div>
+                </>
+              )}
+
+              {error && <div className="error-message">{error}</div>}
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? 'Creating Account...' : 'Complete Registration'}
+                </button>
+                <button type="button" onClick={handleExit} className="btn btn-secondary">
+                  Exit Registration
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

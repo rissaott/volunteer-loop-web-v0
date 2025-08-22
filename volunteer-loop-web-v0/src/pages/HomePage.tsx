@@ -4,7 +4,7 @@ import LoginButton from '../components/LoginButton';
 import './HomePage.css';
 
 const HomePage = () => {
-  const { user, volunteerLoopUser, isRegistered } = useAuth();
+  const { user, volunteerLoopUser } = useAuth();
 
   return (
     <div className="homepage">
