@@ -12,6 +12,7 @@
   z-index: 1000;
   padding: 20px;
   min-height: 100vh;
+  animation: slideIn 0.4s ease-out;
 }
 
 .registration-modal {
@@ -23,6 +24,29 @@
   max-height: 90vh;
   overflow-y: auto;
   border: 2px solid #e0e7ff;
+  animation: modalSlideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-header {

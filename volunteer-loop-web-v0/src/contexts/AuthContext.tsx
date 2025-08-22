@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true)
   const [volunteerLoopUser, setVolunteerLoopUser] = useState<VolunteerLoopUser | null>(null)
   const [showRegistration, setShowRegistration] = useState(false)
+  const [accountChecked, setAccountChecked] = useState(false)
 
   const checkUserAccount = useCallback(async () => {
     if (!user) return
@@ -75,6 +76,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Error checking user account:', err)
       setVolunteerLoopUser(null)
       setShowRegistration(true)
+    } finally {
+      setAccountChecked(true)
     }
   }, [user])
 
@@ -87,10 +90,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Effect to check user account when user changes
   useEffect(() => {
     if (user) {
+      // For new users, show registration immediately while checking
+      setShowRegistration(true)
       checkUserAccount()
     } else {
       setVolunteerLoopUser(null)
       setShowRegistration(false)
+      setAccountChecked(false)
     }
   }, [user, checkUserAccount])
 
@@ -135,10 +141,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (error) throw error
       setVolunteerLoopUser(null)
       setShowRegistration(false)
+      setAccountChecked(false)
     } catch (error) {
       console.error('Error signing out:', error)
     }
   }
+
+  // Determine if we should show registration
+  // Show registration if user is authenticated but account check is not complete
+  // OR if account check is complete and user needs registration
+  const shouldShowRegistration = Boolean(user && (!accountChecked || showRegistration))
 
   const value = {
     user,
@@ -146,7 +158,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loading,
     volunteerLoopUser,
     isRegistered: !!volunteerLoopUser?.onboarding_complete,
-    showRegistration,
+    showRegistration: shouldShowRegistration,
     signInWithGoogle,
     signOut,
     checkUserAccount,

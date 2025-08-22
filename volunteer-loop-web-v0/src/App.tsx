@@ -12,19 +12,31 @@ const AppContent = () => {
 
   console.log('AppContent render:', { showRegistration, user: user?.id, loading });
 
+  // Show loading state during authentication to prevent flicker
+  if (loading) {
+    return (
+      <div className="loading-overlay">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show registration flow immediately if needed
+  if (showRegistration) {
+    return <RegistrationFlow onComplete={completeRegistration} />;
+  }
+
+  // Only show routes when user is fully authenticated and registered
   return (
-    <>
-      {showRegistration ? (
-        <RegistrationFlow onComplete={completeRegistration} />
-      ) : (
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/opportunities" element={<OpportunitiesPage />} />
-          <Route path="/organizations" element={<OrganizationsPage />} />
-          <Route path="/about" element={<AboutPage />} />
-        </Routes>
-      )}
-    </>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/opportunities" element={<OpportunitiesPage />} />
+      <Route path="/organizations" element={<OrganizationsPage />} />
+      <Route path="/about" element={<AboutPage />} />
+    </Routes>
   );
 };
 
