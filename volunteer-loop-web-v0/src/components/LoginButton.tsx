@@ -1,18 +1,53 @@
-import { useAuth } from '../contexts/AuthContext'
-import './LoginButton.css'
+import { useAuth } from '../contexts/AuthContext';
+import './LoginButton.css';
 
 const LoginButton = () => {
-  const { user, signInWithGoogle, signOut, loading } = useAuth()
+  const { user, volunteerLoopUser, signInWithGoogle, signOut, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="login-button loading">
         <div className="spinner"></div>
       </div>
-    )
+    );
+  }
+
+  if (user && volunteerLoopUser) {
+    return (
+      <div className="user-menu">
+        <div className="user-info">
+          <div className="user-avatar">
+            {user.user_metadata?.avatar_url ? (
+              <img 
+                src={user.user_metadata.avatar_url} 
+                alt={volunteerLoopUser.name || 'User'} 
+                className="avatar-image"
+              />
+            ) : (
+              <div className="avatar-placeholder">
+                {volunteerLoopUser.name?.[0] || user.email?.[0] || 'U'}
+              </div>
+            )}
+          </div>
+          <div className="user-details">
+            <span className="user-name">
+              {volunteerLoopUser.name || user.user_metadata?.full_name || user.email}
+            </span>
+            <span className="user-role">
+              {volunteerLoopUser.role === 'volunteer' ? '👤 Volunteer' : '🏢 Organization'}
+            </span>
+          </div>
+        </div>
+        <button onClick={signOut} className="btn btn-secondary logout-btn">
+          Sign Out
+        </button>
+      </div>
+    );
   }
 
   if (user) {
+    // User is authenticated but doesn't have a complete VolunteerLoop account
+    // They should be in the registration flow, so show minimal info
     return (
       <div className="user-menu">
         <div className="user-info">
@@ -29,15 +64,17 @@ const LoginButton = () => {
               </div>
             )}
           </div>
-          <span className="user-name">
-            {user.user_metadata?.full_name || user.email}
-          </span>
+          <div className="user-details">
+            <span className="user-name">
+              {user.user_metadata?.full_name || user.email}
+            </span>
+          </div>
         </div>
         <button onClick={signOut} className="btn btn-secondary logout-btn">
           Sign Out
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -50,7 +87,7 @@ const LoginButton = () => {
       </svg>
       Sign in with Google
     </button>
-  )
-}
+  );
+};
 
-export default LoginButton 
+export default LoginButton; 

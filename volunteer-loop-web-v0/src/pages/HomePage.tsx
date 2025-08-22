@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import LoginButton from '../components/LoginButton';
 import './HomePage.css';
 
 const HomePage = () => {
+  const { user, volunteerLoopUser, isRegistered } = useAuth();
+
   return (
     <div className="homepage">
       {/* Navigation Header */}
@@ -38,10 +41,22 @@ const HomePage = () => {
               Join VolunteerLoop and discover volunteer opportunities that match your skills, 
               interests, and schedule. Make a difference in your community while building meaningful connections.
             </p>
-            <div className="hero-buttons">
-              <Link to="/opportunities" className="btn btn-primary">Find Opportunities</Link>
-              <Link to="/organizations" className="btn btn-secondary">Join as Organization</Link>
-            </div>
+            
+            {!user ? (
+              <div className="hero-buttons">
+                <Link to="/opportunities" className="btn btn-primary">Find Opportunities</Link>
+                <Link to="/organizations" className="btn btn-secondary">Join as Organization</Link>
+              </div>
+            ) : (
+              <div className="hero-buttons">
+                {volunteerLoopUser?.role === 'volunteer' ? (
+                  <Link to="/opportunities" className="btn btn-primary">Find Opportunities</Link>
+                ) : (
+                  <Link to="/organizations" className="btn btn-primary">Manage Organization</Link>
+                )}
+                <Link to="/about" className="btn btn-secondary">Learn More</Link>
+              </div>
+            )}
           </div>
           <div className="hero-visual">
             <div className="hero-circle"></div>
@@ -94,7 +109,11 @@ const HomePage = () => {
           <p className="cta-subtitle">
             Start your volunteer journey today and join thousands of volunteers who are already making an impact.
           </p>
-          <Link to="/opportunities" className="btn btn-cta">Get Started</Link>
+          {!user ? (
+            <Link to="/opportunities" className="btn btn-cta">Get Started</Link>
+          ) : (
+            <Link to="/opportunities" className="btn btn-cta">Find Opportunities</Link>
+          )}
         </div>
       </section>
 

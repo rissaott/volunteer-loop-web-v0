@@ -1,14 +1,28 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+
+interface VolunteerLoopUser {
+  id: string
+  name: string
+  role: 'volunteer' | 'organization'
+  onboarding_complete: boolean
+  created_at: string
+  account_type: string
+}
 
 interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  volunteerLoopUser: VolunteerLoopUser | null
+  isRegistered: boolean
+  showRegistration: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
+  checkUserAccount: () => Promise<void>
+  completeRegistration: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -29,6 +43,56 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [volunteerLoopUser, setVolunteerLoopUser] = useState<VolunteerLoopUser | null>(null)
+  const [showRegistration, setShowRegistration] = useState(false)
+
+  const checkUserAccount = useCallback(async () => {
+    if (!user) return
+
+    try {
+      console.log('Checking user account for:', user.id)
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking user account:', error)
+        return
+      }
+
+      if (data && data.onboarding_complete) {
+        console.log('User account found and complete:', data)
+        setVolunteerLoopUser(data)
+        setShowRegistration(false)
+      } else {
+        console.log('User account not found or incomplete, showing registration')
+        setVolunteerLoopUser(null)
+        setShowRegistration(true)
+      }
+    } catch (err) {
+      console.error('Error checking user account:', err)
+      setVolunteerLoopUser(null)
+      setShowRegistration(true)
+    }
+  }, [user])
+
+  const completeRegistration = () => {
+    setShowRegistration(false)
+    // Refresh user account data
+    checkUserAccount()
+  }
+
+  // Effect to check user account when user changes
+  useEffect(() => {
+    if (user) {
+      checkUserAccount()
+    } else {
+      setVolunteerLoopUser(null)
+      setShowRegistration(false)
+    }
+  }, [user, checkUserAccount])
 
   useEffect(() => {
     // Get initial session
@@ -41,7 +105,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.id)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -68,6 +133,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      setVolunteerLoopUser(null)
+      setShowRegistration(false)
     } catch (error) {
       console.error('Error signing out:', error)
     }
@@ -77,8 +144,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     loading,
+    volunteerLoopUser,
+    isRegistered: !!volunteerLoopUser?.onboarding_complete,
+    showRegistration,
     signInWithGoogle,
-    signOut
+    signOut,
+    checkUserAccount,
+    completeRegistration
   }
 
   return (
